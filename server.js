@@ -1,22 +1,48 @@
-
 let express = require('express');
 let app = express();
 let mongoose = require('mongoose');
 let morgan = require('morgan');
 let bodyParser = require('body-parser');
-let port = 8080;
+let port = 8000;
 let book = require('./app/routes/book');
 let config = require('config'); //we load the db location from the JSON files
-//db options
 let options = { 
-				server: { socketOptions: { keepAlive: 1, connectTimeoutMS: 30000 } }, 
-                replset: { socketOptions: { keepAlive: 1, connectTimeoutMS : 30000 } } 
-              }; 
+	useMongoClient: true,
+	socketTimeoutMS: 30000,
+	keepAlive: true, 
+	connectTimeoutMS : 30000 
+}; 
+//db options
+// let options = { 
+// 	useMongoClient: true,
+// 	server: { 
+// 		socketOptions: { 
+// 			keepAlive: 1, connectTimeoutMS: 30000 
+// 		} 
+// 	}, 
+// 	replset: { 
+// 		socketOptions: { 
+// 			keepAlive: 1, connectTimeoutMS : 30000 
+// 		} 
+// 	} 
+// }; 
+
+
+
+// // Use native ES6 promises
+mongoose.Promise = global.Promise;
 
 //db connection      
 mongoose.connect(config.DBHost, options);
-let db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
+mongoose.connection.on('error', () => {
+  console.error('MongoDB Connection Error');
+  process.exit(1);
+});
+mongoose.connection.once('open', function() {
+  console.error('MongoDB Connection successful.');
+});
+// let db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
 
 //don't show the log when it is test
 if(config.util.getEnv('NODE_ENV') !== 'test') {
